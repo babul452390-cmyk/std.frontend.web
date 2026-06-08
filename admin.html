@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — EduRegister</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0d0f14;--surface:#161922;--surface2:#1e2330;--border:#2a3040;
+      --accent:#4f9cf9;--accent2:#7c3aed;--success:#22d3a0;--error:#f87171;
+      --warning:#fbbf24;--text:#e8eaf0;--muted:#6b7280;--sidebar-w:240px;
+    }
+    body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    /* LOGIN */
+    #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background-image:radial-gradient(ellipse at 30% 50%,rgba(79,156,249,.08) 0%,transparent 60%);}
+    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+      padding:2.5rem;width:380px;box-shadow:0 30px 60px rgba(0,0,0,.5);animation:fadeUp .5s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .login-title{font-size:1.5rem;font-weight:700;margin-bottom:.3rem;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .login-sub{color:var(--muted);font-size:.82rem;margin-bottom:2rem;}
+    .field{margin-bottom:1rem;}
+    label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px;}
+    input,select{width:100%;background:var(--surface2);border:1px solid var(--border);
+      border-radius:10px;color:var(--text);font-family:'Sora',sans-serif;
+      font-size:.9rem;padding:.7rem 1rem;outline:none;transition:border-color .2s,box-shadow .2s;}
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,156,249,.12);}
+    select option{background:var(--surface2);}
+    .btn-primary{width:100%;padding:.85rem;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border:none;border-radius:10px;color:white;font-family:'Sora',sans-serif;
+      font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .2s;}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+    .err-msg{color:var(--error);font-size:.82rem;margin-top:.8rem;display:none;}
+    .err-msg.show{display:block;}
+
+    /* DASHBOARD */
+    #dashboard{display:none;min-height:100vh;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);
+      background:var(--surface);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;}
+    .sidebar-logo{padding:0 1.5rem 1.5rem;font-size:1.1rem;font-weight:700;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .sidebar-logo span{font-size:.68rem;display:block;color:var(--muted);-webkit-text-fill-color:var(--muted);font-weight:400;margin-top:2px;}
+    .nav{margin-top:1.5rem;flex:1;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:.75rem 1.5rem;
+      cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted);
+      border-left:3px solid transparent;transition:all .2s;user-select:none;}
+    .nav-item:hover{color:var(--text);background:var(--surface2);}
+    .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(79,156,249,.07);}
+    .nav-icon{font-size:1rem;width:20px;text-align:center;}
+    .sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted);}
+    .logout-btn{display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;
+      color:var(--error);font-size:.82rem;font-family:'Sora',sans-serif;padding:.4rem 0;transition:opacity .2s;}
+    .logout-btn:hover{opacity:.7;}
+    .main{margin-left:var(--sidebar-w);padding:2rem;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+    .page-title{font-size:1.4rem;font-weight:700;}
+    .page-sub{color:var(--muted);font-size:.82rem;margin-top:2px;}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+      padding:1.3rem 1.5rem;transition:border-color .2s;}
+    .stat-card:hover{border-color:var(--accent);}
+    .stat-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;}
+    .stat-value{font-size:2rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+    .blue{color:var(--accent)}.purple{color:#a78bfa}.green{color:var(--success)}.yellow{color:var(--warning)}
+
+    /* CARD + TABLE */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem;}
+    .card-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
+    .card-header h3{font-size:1rem;font-weight:600;flex:1;min-width:120px;}
+    .search-box{display:flex;align-items:center;gap:8px;background:var(--surface2);
+      border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;}
+    .search-box input{background:none;border:none;color:var(--text);font-size:.85rem;width:180px;padding:0;}
+    .search-box input:focus{box-shadow:none;}
+    .filter-sel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:.45rem .8rem;font-size:.82rem;color:var(--text);width:auto;}
+    .export-btn{padding:.45rem 1rem;background:rgba(34,211,160,.12);border:1px solid rgba(34,211,160,.3);
+      border-radius:8px;color:var(--success);font-size:.82rem;font-family:'Sora',sans-serif;
+      cursor:pointer;font-weight:500;transition:background .2s;white-space:nowrap;}
+    .export-btn:hover{background:rgba(34,211,160,.2);}
+    table{width:100%;border-collapse:collapse;}
+    th{background:var(--surface2);padding:.8rem 1rem;text-align:left;font-size:.68rem;
+      color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500;}
+    td{padding:.85rem 1rem;border-bottom:1px solid var(--border);font-size:.84rem;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(255,255,255,.02);}
+    .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:500;}
+    .badge-blue{background:rgba(79,156,249,.15);color:var(--accent);}
+    .badge-purple{background:rgba(167,139,250,.15);color:#a78bfa;}
+    .badge-green{background:rgba(34,211,160,.15);color:var(--success);}
+    .avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--border);}
+    .avatar-placeholder{width:34px;height:34px;border-radius:50%;background:var(--surface2);
+      border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+    .action-btn{padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer;border:1px solid;
+      font-family:'Sora',sans-serif;transition:all .2s;margin-right:4px;}
+    .btn-edit{color:var(--accent);border-color:var(--accent);background:transparent;}
+    .btn-edit:hover{background:rgba(79,156,249,.1);}
+    .btn-del{color:var(--error);border-color:var(--error);background:transparent;}
+    .btn-del:hover{background:rgba(248,113,113,.1);}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;
+      align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+      padding:2rem;width:90%;max-width:620px;max-height:90vh;overflow-y:auto;animation:fadeUp .3s ease;}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+    .modal-title{font-size:1.1rem;font-weight:600;}
+    .modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;}
+    .modal-close:hover{color:var(--text);}
+    .modal .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .modal .field{margin-bottom:0;}
+    .modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end;}
+    .btn-save{padding:.6rem 1.5rem;background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border:none;border-radius:8px;color:white;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;}
+    .btn-cancel{padding:.6rem 1.5rem;background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-family:'Sora',sans-serif;font-size:.88rem;cursor:pointer;}
+    .sec-div{font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--accent);
+      letter-spacing:2px;text-transform:uppercase;margin:1rem 0 .6rem;
+      padding-bottom:.4rem;border-bottom:1px solid var(--border);grid-column:1/-1;}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:.8rem 1.2rem;font-size:.85rem;z-index:999;
+      transform:translateY(80px);opacity:0;transition:all .3s ease;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast.success{border-color:var(--success);color:var(--success);}
+    .toast.error{border-color:var(--error);color:var(--error);}
+    .empty-state{padding:3rem;text-align:center;color:var(--muted);}
+    .empty-state .icon{font-size:2.5rem;margin-bottom:.8rem;}
+
+    /* CHART BAR */
+    .chart-bar-wrap{padding:1.2rem 1.5rem;}
+    .chart-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.7rem;font-size:.82rem;}
+    .chart-label{width:110px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .chart-track{flex:1;background:var(--surface2);border-radius:99px;height:8px;overflow:hidden;}
+    .chart-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s ease;}
+    .chart-count{width:30px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--text);}
+
+    @media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}.sidebar{display:none}.main{margin-left:0}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-title">🔐 Admin Login</div>
+    <div class="login-sub">EduRegister Administration Panel</div>
+    <div class="field"><label>Username</label><input id="loginUser" placeholder="admin" value="admin"/></div>
+    <div class="field"><label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" value="admin123" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-primary" onclick="doLogin()" id="loginBtn">Login to Dashboard</button>
+    <div class="err-msg" id="loginErr">❌ Invalid credentials or server unreachable</div>
+    <div style="margin-top:1rem;font-size:.75rem;color:var(--muted);text-align:center;">Default: admin / admin123</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="sidebar">
+    <div class="sidebar-logo">🎓 EduRegister <span>Admin Panel</span></div>
+    <nav class="nav">
+      <div class="nav-item active" data-page="overview" onclick="showPage('overview',this)">
+        <span class="nav-icon">📊</span> Overview
+      </div>
+      <div class="nav-item" data-page="students" onclick="showPage('students',this)">
+        <span class="nav-icon">🧑‍🎓</span> All Students
+      </div>
+      <div class="nav-item" data-page="settings" onclick="showPage('settings',this)">
+        <span class="nav-icon">⚙️</span> Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="margin-bottom:.4rem">Logged in as <strong id="adminName" style="color:var(--text)">—</strong></div>
+      <button class="logout-btn" onclick="doLogout()">⬅ Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div id="overviewPage">
+      <div class="topbar">
+        <div><div class="page-title">Dashboard Overview</div><div class="page-sub">Welcome back! Here's what's happening.</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-value blue" id="statTotal">—</div></div>
+        <div class="stat-card"><div class="stat-label">Male</div><div class="stat-value purple" id="statMale">—</div></div>
+        <div class="stat-card"><div class="stat-label">Female</div><div class="stat-value green" id="statFemale">—</div></div>
+        <div class="stat-card"><div class="stat-label">Classes Active</div><div class="stat-value yellow" id="statClasses">—</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <!-- Class chart -->
+        <div class="card">
+          <div class="card-header"><h3>📚 Students by Class</h3></div>
+          <div class="chart-bar-wrap" id="classChart"><div class="empty-state"><div class="icon">⏳</div></div></div>
+        </div>
+        <!-- Recent -->
+        <div class="card">
+          <div class="card-header"><h3>🕐 Recent Registrations</h3></div>
+          <table>
+            <thead><tr><th>Name</th><th>Class</th><th>Date</th></tr></thead>
+            <tbody id="recentTable"><tr><td colspan="3"><div class="empty-state"><div class="icon">⏳</div></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div id="studentsPage" style="display:none">
+      <div class="topbar">
+        <div><div class="page-title">All Students</div><div class="page-sub">Manage registered student records</div></div>
+        <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>🧑‍🎓 Student Records</h3>
+          <div class="search-box">🔍 <input id="searchInput" placeholder="Search name, email, roll…" oninput="loadStudents()"/></div>
+          <select class="filter-sel" id="classFilter" onchange="loadStudents()">
+            <option value="">All Classes</option>
+            <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+            <option>Class 9</option><option>Class 10</option><option>Class 11</option>
+            <option>Class 12</option><option>HSC 1st Year</option><option>HSC 2nd Year</option>
+            <option>Degree 1st Year</option><option>Degree 2nd Year</option><option>Degree 3rd Year</option>
+          </select>
+          <select class="filter-sel" id="genderFilter" onchange="loadStudents()">
+            <option value="">All Genders</option><option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr><th></th><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Class</th><th>Roll</th><th>Gender</th><th>Actions</th></tr></thead>
+          <tbody id="studentsTable"><tr><td colspan="9"><div class="empty-state"><div class="icon">⏳</div>Loading…</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsPage" style="display:none">
+      <div class="topbar"><div><div class="page-title">Settings</div><div class="page-sub">Change admin password</div></div></div>
+      <div class="card" style="max-width:440px">
+        <div class="card-header"><h3>🔑 Change Password</h3></div>
+        <div style="padding:1.5rem">
+          <div class="field" style="margin-bottom:1rem"><label>Current Password</label><input type="password" id="curPw"/></div>
+          <div class="field" style="margin-bottom:1rem"><label>New Password</label><input type="password" id="newPw"/></div>
+          <div class="field" style="margin-bottom:1.5rem"><label>Confirm New Password</label><input type="password" id="confPw"/></div>
+          <button class="btn-save" style="width:100%;padding:.75rem" onclick="changePw()">Update Password</button>
+          <div id="pwMsg" style="margin-top:.8rem;font-size:.82rem;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /dashboard -->
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Student</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <input type="hidden" id="editId"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="sec-div">Personal Info</div>
+      <div class="field"><label>Name</label><input id="e_name"/></div>
+      <div class="field"><label>Email</label><input id="e_email" type="email"/></div>
+      <div class="field"><label>Phone</label><input id="e_phone"/></div>
+      <div class="field"><label>Date of Birth</label><input id="e_dob" type="date"/></div>
+      <div class="field"><label>Gender</label>
+        <select id="e_gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="field"><label>Address</label><input id="e_address"/></div>
+      <div class="sec-div">Academic Info</div>
+      <div class="field"><label>Class</label>
+        <select id="e_class">
+          <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+          <option>Class 9</option><option>Class 10</option><option>Class 11</option>
+          <option>Class 12</option><option>HSC 1st Year</option><option>HSC 2nd Year</option>
+          <option>Degree 1st Year</option><option>Degree 2nd Year</option><option>Degree 3rd Year</option>
+        </select></div>
+      <div class="field"><label>Section</label><input id="e_section"/></div>
+      <div class="field"><label>Roll Number</label><input id="e_roll"/></div>
+      <div class="sec-div">Guardian Info</div>
+      <div class="field"><label>Guardian Name</label><input id="e_guardian_name"/></div>
+      <div class="field"><label>Guardian Phone</label><input id="e_guardian_phone"/></div>
+      <div class="sec-div">Photo</div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Replace Photo (optional)</label>
+        <input type="file" id="e_photo" accept="image/*"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://localhost:5000';
+  let token = localStorage.getItem('admin_token');
+  let adminUser = localStorage.getItem('admin_user');
+  if (token) showDashboard();
+
+  async function doLogin() {
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+    try {
+      const res  = await fetch(`${API}/api/admin/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username: document.getElementById('loginUser').value, password: document.getElementById('loginPass').value })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        token = data.token; adminUser = data.username;
+        localStorage.setItem('admin_token', token);
+        localStorage.setItem('admin_user', adminUser);
+        document.getElementById('loginErr').classList.remove('show');
+        showDashboard();
+      } else {
+        document.getElementById('loginErr').textContent = '❌ ' + data.error;
+        document.getElementById('loginErr').classList.add('show');
+      }
+    } catch {
+      document.getElementById('loginErr').textContent = '🔌 Cannot reach server. Is the backend running?';
+      document.getElementById('loginErr').classList.add('show');
+    }
+    btn.disabled = false; btn.textContent = 'Login to Dashboard';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('adminName').textContent = adminUser || 'Admin';
+    loadStats();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); token = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+  }
+
+  function showPage(page, el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    ['overview','students','settings'].forEach(p => {
+      document.getElementById(p+'Page').style.display = p === page ? 'block' : 'none';
+    });
+    if (page === 'students') loadStudents();
+    if (page === 'overview') loadStats();
+  }
+
+  async function loadStats() {
+    try {
+      const data = await apiGet('/api/admin/stats');
+      document.getElementById('statTotal').textContent   = data.total;
+      document.getElementById('statMale').textContent    = data.byGender.find(g=>g.gender==='Male')?.count || 0;
+      document.getElementById('statFemale').textContent  = data.byGender.find(g=>g.gender==='Female')?.count || 0;
+      document.getElementById('statClasses').textContent = data.byClass.length;
+
+      // Class chart
+      const maxC = Math.max(1, ...data.byClass.map(c=>c.count));
+      document.getElementById('classChart').innerHTML = data.byClass.length
+        ? data.byClass.map(c => `
+          <div class="chart-row">
+            <div class="chart-label">${c.class||'Unknown'}</div>
+            <div class="chart-track"><div class="chart-fill" style="width:${(c.count/maxC*100).toFixed(1)}%"></div></div>
+            <div class="chart-count">${c.count}</div>
+          </div>`).join('')
+        : '<div class="empty-state"><div class="icon">📭</div>No data</div>';
+
+      // Recent table
+      document.getElementById('recentTable').innerHTML = data.recent.length
+        ? data.recent.map(s=>`
+          <tr>
+            <td><strong>${s.name}</strong></td>
+            <td><span class="badge badge-blue">${s.class||'—'}</span></td>
+            <td style="color:var(--muted);font-size:.75rem">${new Date(s.created_at).toLocaleDateString('en-BD')}</td>
+          </tr>`).join('')
+        : `<tr><td colspan="3"><div class="empty-state"><div class="icon">📭</div>No students yet</div></td></tr>`;
+    } catch(e) { console.error(e); }
+  }
+
+  async function loadStudents() {
+    const search = document.getElementById('searchInput')?.value||'';
+    const cls    = document.getElementById('classFilter')?.value||'';
+    const gender = document.getElementById('genderFilter')?.value||'';
+    let url = `/api/admin/students?`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (cls)    url += `class=${encodeURIComponent(cls)}&`;
+    if (gender) url += `gender=${encodeURIComponent(gender)}`;
+
+    try {
+      const students = await apiGet(url);
+      const tbody    = document.getElementById('studentsTable');
+      if (!students.length) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">🔍</div>No students found</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = students.map(s => `
+        <tr>
+          <td>${s.photo
+            ? `<img src="${API+s.photo}" class="avatar" onerror="this.style.display='none'">`
+            : `<div class="avatar-placeholder">👤</div>`}</td>
+          <td><span style="font-family:JetBrains Mono;color:var(--muted)">#${s.id}</span></td>
+          <td><strong>${s.name}</strong></td>
+          <td style="color:var(--muted)">${s.email}</td>
+          <td>${s.phone||'—'}</td>
+          <td><span class="badge badge-blue">${s.class||'—'}</span></td>
+          <td><span class="badge badge-purple">${s.roll_number||'—'}</span></td>
+          <td><span class="badge ${s.gender==='Male'?'badge-blue':s.gender==='Female'?'badge-green':''}">${s.gender||'—'}</span></td>
+          <td>
+            <button class="action-btn btn-edit" onclick="openEdit(${s.id})">Edit</button>
+            <button class="action-btn btn-del"  onclick="deleteStudent(${s.id},'${s.name.replace(/'/g,"\\'")}')">Delete</button>
+          </td>
+        </tr>`).join('');
+    } catch { showToast('error','🔌 Server connection failed'); }
+  }
+
+  async function openEdit(id) {
+    const s = await apiGet(`/api/admin/students/${id}`);
+    document.getElementById('editId').value        = s.id;
+    document.getElementById('e_name').value        = s.name||'';
+    document.getElementById('e_email').value       = s.email||'';
+    document.getElementById('e_phone').value       = s.phone||'';
+    document.getElementById('e_dob').value         = s.dob||'';
+    document.getElementById('e_gender').value      = s.gender||'Male';
+    document.getElementById('e_address').value     = s.address||'';
+    document.getElementById('e_class').value       = s.class||'';
+    document.getElementById('e_section').value     = s.section||'';
+    document.getElementById('e_roll').value        = s.roll_number||'';
+    document.getElementById('e_guardian_name').value  = s.guardian_name||'';
+    document.getElementById('e_guardian_phone').value = s.guardian_phone||'';
+    document.getElementById('e_photo').value = '';
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('editModal').classList.remove('open'); }
+
+  async function saveEdit() {
+    const id = document.getElementById('editId').value;
+    const fd = new FormData();
+    ['name','email','phone','dob','gender','address','section'].forEach(f =>
+      fd.append(f, document.getElementById('e_'+f).value));
+    fd.append('class',          document.getElementById('e_class').value);
+    fd.append('roll_number',    document.getElementById('e_roll').value);
+    fd.append('guardian_name',  document.getElementById('e_guardian_name').value);
+    fd.append('guardian_phone', document.getElementById('e_guardian_phone').value);
+    const photo = document.getElementById('e_photo').files[0];
+    if (photo) fd.append('photo', photo);
+
+    const res = await fetch(`${API}/api/admin/students/${id}`, {
+      method:'PUT', headers:{ Authorization:`Bearer ${token}` }, body: fd
+    });
+    if (res.ok) { showToast('success','✅ Student updated!'); closeModal(); loadStudents(); }
+    else        { showToast('error','❌ Update failed'); }
+  }
+
+  async function deleteStudent(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    const res = await fetch(`${API}/api/admin/students/${id}`, {
+      method:'DELETE', headers:{ Authorization:`Bearer ${token}` }
+    });
+    if (res.ok) { showToast('success',`🗑️ ${name} deleted`); loadStudents(); loadStats(); }
+  }
+
+  function exportCSV() {
+    window.open(`${API}/api/admin/export/csv?token=${token}`);
+    // Note: also works via header auth in curl; browser uses query token trick
+    // Better: fetch as blob
+    fetch(`${API}/api/admin/export/csv`, { headers:{ Authorization:`Bearer ${token}` }})
+      .then(r => r.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `students_${Date.now()}.csv`;
+        a.click();
+      })
+      .catch(() => showToast('error','Export failed'));
+  }
+
+  async function changePw() {
+    const cur  = document.getElementById('curPw').value;
+    const nw   = document.getElementById('newPw').value;
+    const conf = document.getElementById('confPw').value;
+    const msg  = document.getElementById('pwMsg');
+    if (!cur||!nw||!conf) { showPwMsg('error','All fields required'); return; }
+    if (nw !== conf)       { showPwMsg('error','New passwords do not match'); return; }
+    if (nw.length < 6)     { showPwMsg('error','Password must be at least 6 characters'); return; }
+    const res  = await fetch(`${API}/api/admin/change-password`, {
+      method:'PUT', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify({ currentPassword: cur, newPassword: nw })
+    });
+    const data = await res.json();
+    if (res.ok) { showPwMsg('success','✅ Password changed successfully'); ['curPw','newPw','confPw'].forEach(f => document.getElementById(f).value=''); }
+    else        { showPwMsg('error','❌ '+data.error); }
+  }
+
+  function showPwMsg(type, txt) {
+    const el = document.getElementById('pwMsg');
+    el.style.display = 'block';
+    el.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+    el.textContent = txt;
+  }
+
+  async function apiGet(url) {
+    const res = await fetch(API + (url.startsWith('/api') ? url : url), {
+      headers: { Authorization:`Bearer ${token}` }
+    });
+    if (res.status === 401) { doLogout(); throw new Error('Unauthorized'); }
+    return res.json();
+  }
+
+  function showToast(type, msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(()=>t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
